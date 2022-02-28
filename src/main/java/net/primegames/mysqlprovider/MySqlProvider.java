@@ -9,7 +9,6 @@
 package net.primegames.mysqlprovider;
 
 import lombok.Getter;
-import net.primegames.mysqlprovider.connection.ConnectionId;
 import net.primegames.mysqlprovider.connection.MySqlConnectionBuilder;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -18,7 +17,6 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.sql.Connection;
-import java.util.Map;
 
 public class MySqlProvider {
 
@@ -26,60 +24,44 @@ public class MySqlProvider {
 
     @Getter
     private final Plugin plugin;
-    private Map<ConnectionId, Connection> connections;
+    @Getter 
+    private final Connection connection;
 
     public MySqlProvider(Plugin plugin) {
         this.plugin = plugin;
+        connection = init().getConnection();
     }
 
     public void scheduleTask(BukkitRunnable mySqlTask) {
         mySqlTask.runTaskAsynchronously(this.plugin);
     }
 
-
-    public Map<ConnectionId, Connection> getConnections() {
-        return connections;
-    }
-
-    public Connection getConnection(ConnectionId connectionId){
-        return this.connections.get(connectionId);
-    }
-
-    public void createConnection(ConnectionId connectionId, MysqlCredentials credentials){
-        try {
-            this.connections.put(connectionId, credentials.createConnection());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    public MySqlConnectionBuilder buildCoreConnection(Plugin plugin) {
+    public MySqlConnectionBuilder init() {
         plugin.saveDefaultConfig();
-        return new MySqlConnectionBuilder(getCredentials(plugin));
+        return new MySqlConnectionBuilder(getCredentials());
     }
 
-    private MysqlCredentials getCredentials(Plugin plugin) {
+    private MysqlCredentials getCredentials() {
         FileConfiguration config = plugin.getConfig();
-        if (config.getString("core.mysql.host") == null || config.getString("core.mysql.port") == null || config.getString("core.mysql.database") == null || config.getString("core.mysql.username") == null || config.getString("core.mysql.password") == null) {
+        if (config.getString("mysql.host") == null || config.getString("mysql.port") == null || config.getString("mysql.database") == null || config.getString("mysql.username") == null || config.getString("mysql.password") == null) {
             Bukkit.getLogger().warning(MySqlProvider.PREFIX + "MySQL Credentials are missing in config.yml" + " of " + plugin.getName() + " plugin. Setting defaults...");
             setDefaults(config);
             plugin.saveConfig();
             Bukkit.getLogger().warning(MySqlProvider.PREFIX + "MySQL Credentials are set to defaults, Make sure to set them correctly in config.yml of " + plugin.getName() + " plugin.");
         }
-        String host = config.getString("core.mysql.host");
-        int port = config.getInt("core.mysql.port");
-        String database = config.getString("core.mysql.database");
-        String username = config.getString("core.mysql.username");
-        String password = config.getString("core.mysql.password");
+        String host = config.getString("mysql.host");
+        int port = config.getInt("mysql.port");
+        String database = config.getString("mysql.database");
+        String username = config.getString("mysql.username");
+        String password = config.getString("mysql.password");
         return new MysqlCredentials(host, username, password, database, port);
     }
 
     private static void setDefaults(FileConfiguration config) {
-        config.set("core.mysql.host", "127.0.0.1");
-        config.set("core.mysql.port", 3306);
-        config.set("core.mysql.database", "core");
-        config.set("core.mysql.username", "root");
-        config.set("core.mysql.password", "password");
+        config.set("mysql.host", "127.0.0.1");
+        config.set("mysql.port", 3306);
+        config.set("mysql.database", "core");
+        config.set("mysql.username", "root");
+        config.set("mysql.password", "password");
     }
 }
