@@ -37,7 +37,7 @@ public class MySqlProvider {
     }
 
     public MySqlConnectionBuilder init() {
-        plugin.saveDefaultConfig();
+        plugin.saveResource("config.yml", false);
         return new MySqlConnectionBuilder(getCredentials());
     }
 
